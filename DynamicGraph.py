@@ -104,8 +104,17 @@ class DynamicGraph(object):
     def _expand(at, z):
         print "To do"
 
-    def infEst():
-        print "to do"
+    def infEst(vSet):
+        hit = 0
+
+        for i in range(len(hs)):
+            for v in vSet:
+                if (v in hs[i].H):
+                    hit += 1
+                    break
+
+        return (1.0 * hit * len(Vertices))/(len(hs))
+
 
 
     def infMax():
