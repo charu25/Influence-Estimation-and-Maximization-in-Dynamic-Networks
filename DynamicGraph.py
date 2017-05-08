@@ -1,19 +1,19 @@
 class Hedge(object):
-	def __init__(self):
-		self.H = set([])
+    def __init__(self):
+        self.H = set([])
         self.par = []
         self.x = []
         self.z = -1
 
 
 class DynamicGraph(object):
-	Index = []
-	Vertices = {}
-	VtoIndices = { }
-	W = 0
-	IndegMap = {}
-	ps = {}
-	rs = {}
+    Index = []
+    Vertices = {}
+    VtoIndices = { }
+    W = 0
+    IndegMap = {}
+    ps = {}
+    rs = {}
     TOT = -1
     hs = []
     ws = []
@@ -21,7 +21,7 @@ class DynamicGraph(object):
     def _get_R():
         n, m = len(self.Vertices), len(self.ps)
         return (self.beta * (n + m) * np.log2(n))
-	
+
     def _next_target(at):
         n = len(self.vertexList)
 
@@ -35,21 +35,21 @@ class DynamicGraph(object):
 
             cnt += 1
 
-	def __init__(self):
-		self.name = ""
+    def __init__(self):
+        self.name = ""
 
-	#u is the source ,v vertex and p is prob
-	def addEdge(u,v,p):
-		print "yafg"
+    #u is the source ,v vertex and p is prob
+    def addEdge(u,v,p):
+        print "yafg"
 
-	def addVertex(u):
-		print "yafg"
-	
+    def addVertex(u):
+        print "yafg"
 
-	def delVertex(u):
-		print"ToDO"
-		
-	def delEdge(u,v):
+
+    def delVertex(u):
+        print"ToDO"
+
+    def delEdge(u,v):
         if (u,v) not in self.ps:
             print 'Warning: Edge (%d, %d) does not exist.' % (u,v)
             return
@@ -64,10 +64,10 @@ class DynamicGraph(object):
             self.IndegMap[v] -= 1
             _adjust()
 
-	def changeEdge(u,v,p):
-		print "To DO"
+    def changeEdge(u,v,p):
+        print "To DO"
 
-	def _adjust():
+    def _adjust():
         R = _get_R()
 
         rem = 0
@@ -97,16 +97,16 @@ class DynamicGraph(object):
 
 
 
-	def _shrink(att):
-		print ""
+    def _shrink(att):
+        print ""
 
 
-	def _expand(at, z):
-		print "To do"
+    def _expand(at, z):
+        print "To do"
 
-	def infEst():
-		print "to do"
+    def infEst():
+        print "to do"
 
 
-	def infMax():
-		print "To do"
+    def infMax():
+        print "To do"
