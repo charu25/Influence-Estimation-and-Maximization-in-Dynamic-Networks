@@ -7,7 +7,6 @@ class Hedge(object):
 
 
 class DynamicGraph(object):
-    Index = []
     Vertices = {}
     VtoIndices = { }
     W = 0
@@ -56,7 +55,7 @@ class DynamicGraph(object):
         else:
             _change(u, v, 0)
 
-            for node in Index[v]:
+            for node in VtoIndices[v]:
                 _weight(node, -1)
 
             self.ps.remove((u,v))
