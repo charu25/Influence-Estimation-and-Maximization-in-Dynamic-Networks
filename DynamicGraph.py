@@ -8,7 +8,7 @@ class Hedge(object):
 
 class DynamicGraph(object):
     Vertices = {}
-    VtoIndices = { }
+    VtoIndices = {}
     W = 0
     IndegMap = {}
     ps = {}
@@ -114,7 +114,19 @@ class DynamicGraph(object):
 
         return (1.0 * hit * len(Vertices))/(len(hs))
 
+    def _clear(at):
 
+        for v in self.hs[at].H:
+            self.VtoIndices[v].remove(at)
+
+        _weight(at, -selft.ws[at])
+        self.hs[at].H = []
+        self.hs[at].x = []
+        self.hs[at].par = []
 
     def infMax():
         print "To do"
+
+    def _weight(at, dw):
+        self.ws[at] += dw
+        self.TOT += dw
