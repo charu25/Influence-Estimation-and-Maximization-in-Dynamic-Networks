@@ -1,10 +1,11 @@
+import random as rng
+
 class Hedge(object):
     def __init__(self):
         self.H = set([])
         self.par = []
         self.x = []
         self.z = -1
-
 
 class DynamicGraph(object):
     Vertices = {}
@@ -17,6 +18,7 @@ class DynamicGraph(object):
     hs = []
     ws = []
 
+
     def _get_R():
         n, m = len(self.Vertices), len(self.ps)
         return (self.beta * (n + m) * np.log2(n))
@@ -26,8 +28,8 @@ class DynamicGraph(object):
 
         cnt = 0
         while True:
-            num = self.rng.gen_int(n)
-            z = self.vertexList[num]
+            rng.seed(n)
+            z = random.choice(self.vertexList)
 
             if (z in self.Vertices):
                 return z
