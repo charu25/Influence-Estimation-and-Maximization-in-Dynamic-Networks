@@ -205,6 +205,7 @@ class DynamicGraph(object):
 
     def _shrink(self,att):
         #clear -> TO DO
+	self._clear() 
         queue = deque()
         queue.append(self.hs[att].z)
         X = set()
