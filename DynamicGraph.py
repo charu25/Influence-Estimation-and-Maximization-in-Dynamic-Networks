@@ -28,11 +28,11 @@ class DynamicGraph(object):
 
     def __init__(self):
         self.name = ""
+        # self._adjust()
 
     def _next_target(self, at):
         n = len(self.VertexList)
         while True:
-            rng.seed(n)
             z = random.choice(self.VertexList)
             if (z in self.Vertices):
                 return z
@@ -48,6 +48,7 @@ class DynamicGraph(object):
 
     def set_beta(self, beta_val):
         self.beta = beta_val
+        self._adjust()
 
     #u is the source ,v vertex and p is prob
     def addEdge(self,u,v,p):
@@ -68,21 +69,25 @@ class DynamicGraph(object):
         self._adjust()
 
     def addVertex(self, u):
-        if u in self.Vertices:
+    	if u in self.Vertices:
             return
         else:
             self.IndegMap[u] = 0
             self.Vertices.add(u)
             self.VertexList.append(u)
 
+            count = 0
+            prob = 1.0/len(self.Vertices)
+            # print "Sizeof hs:",len(self.hs)
             for at in range(0, len(self.hs)):
-                prob = 1.0/len(self.Vertices)
-                temp = random.uniform(0, 1)
+                temp = random.random()
+                count+=1
                 if (temp < prob):
                     self._clear(at)
                     self.hs[at].z = u
-                    self._expand(at, u);
-        self._adjust()
+                    self._expand(at, u)
+            self._adjust()
+            print count
 
     def delEdge(self,u,v):
         if (u,v) not in self.ps:
@@ -148,7 +153,7 @@ class DynamicGraph(object):
                 self._shrink(at)
 
     def delVertex(self,v):
-        if v in self.Vertices :
+        if v not in self.Vertices :
             "vertex {} was not found.".format(v)
             return
         else :
@@ -156,16 +161,16 @@ class DynamicGraph(object):
             out = []
 
             # OUT-edges `from' v
-            for it in range(bisect_left(self.ps, (v, 0), lo=0, hi=len(self.ps)), len(self.ps)) :
-                if it[0] != v:
-                    break
-                out.append(it[1]);
+            # for it in range(bisect_left(self.ps, (v, 0), lo=0, hi=len(self.ps)), len(self.ps)) :
+            for it in self.ps.keys():
+                if it[0] == v:
+                    out.append(it[1]);
 
             # IN-edges `to' v
-            for it in range(bisect_left(self.rs, (v, 0), lo=0, hi=len(self.rs)), len(self.rs)) :
-                if it[0] != v:
-                    break
-                ine.append(it[1])
+            # for it in range(bisect_left(self.rs, (v, 0), lo=0, hi=len(self.rs)), len(self.rs)) :
+            for it in self.rs.keys():
+                if it[0] == v:
+                    ine.append(it[1])
 
             # Remove OUT-edges from each sketch
             for w in out :
@@ -180,32 +185,31 @@ class DynamicGraph(object):
             self.Vertices.remove(v);
             for w in out :
                 # Remove (v, w)
-                self.ps.remove((v, w))
-                self.rs.remove((w, v))
+                del self.ps[(v, w)]
+                del self.rs[(w, v)]
                 self.IndegMap[w]-=1
 
             # Scan sketches that have v
-            for at in self.VtoIndices[v] :
-                if (self.hs[at].z == v) : # If target = v
-                    # Reconstruction
-                    self._clear(at)
-                    self.hs[at].z = self._next_target(at)
-                    self._expand(at, self.hs[at].z)
-                else : #{ // Otherwise
-                    # Remove vertices that can no longer reach to z
-                    self._shrink(at)
-
+            sets = self.VtoIndices[v][:]
+            for at in sets:
+            	if self.hs[at].z == v:
+            		self._clear(at)
+            		self.hs[at].z = self._next_target(at)
+            		self._expand(at, self.hs[at].z)
+                else :
+                	self._shrink(at)
+                	
             # Remove IN-edges to v
             for u in ine :
-                self.ps.remove((u, v))
-                self.rs.remove((v, u))
+                del self.ps[(u, v)]
+                del self.rs[(v, u)]
                 self.IndegMap[v]-=1
-            self.IndegMap.remove(v)
+
+            del self.IndegMap[v] 
             self._adjust()
 
     def _shrink(self,att):
-        #clear -> TO DO
-	self._clear(att) 
+        self._clear(att) 
         queue = deque()
         queue.append(self.hs[att].z)
         X = set()
@@ -257,15 +261,17 @@ class DynamicGraph(object):
             self.hs[at].x = sorted(self.hs[at].x, key=lambda tup: (tup[0],tup[1]))
             self.hs[at].par = sorted(self.hs[at].par, key=lambda tup: (tup[0],tup[1]))
 
-    def infEst(self, vSet):
-        hit = 0
-        for i in range(len(self.hs)):
-            for v in vSet:
-                if (v in self.hs[i].H):
-                    hit += 1
-                    break
+    def infEst(self,v):
+        # hit = 0
+        # for i in range(len(self.hs)):
+        #     for v in vSet:
+        #         if (v in self.hs[i].H):
+        #             hit += 1
+        #             break
 
-        return (1.0 * hit * len(self.Vertices))/(len(self.hs))
+        # return (1.0 * hit * len(self.Vertices))/(len(self.hs))
+        # print "V :: {}, VtoIndices[v] :: {}".format(v,len(self.VtoIndices[v]))
+        return 1.0*len(self.VtoIndices[v]) / len(self.hs) * len(self.Vertices)
 
     def _clear(self, at):
 
@@ -279,7 +285,7 @@ class DynamicGraph(object):
 
 
     def infMax(self, k):
-        n = len(self.Vertices)
+        n = len(self.VertexList)
         # vector<ULL> degs(n);
         I = [False]*len(self.hs)
 
@@ -290,18 +296,18 @@ class DynamicGraph(object):
         # priority_queue<tuple<LL, int, int> > Q;
         # <deg, v, tick>
 
-        for v in self.Vertices :
+        for v in self.Vertices:
             degs[v] = len(self.VtoIndices[v])
             Q.put((degs[v], v, 0))
 
         S = []
         iter = 0
-        while iter < k :
+        while iter < k and iter < len(self.Vertices):
             e = Q.get()
             v = e[1] 
             tick = e[2]
             if tick == iter :
-                S.append(v);
+                S.append(v)
                 for at in self.VtoIndices[v] :
                     if not I[at] :
                         I[at] = True;
@@ -309,6 +315,6 @@ class DynamicGraph(object):
                             degs[v] -= 1
                 iter+=1
             else :
-                Q.push((degs[v], v, iter))
+                Q.put((degs[v], v, iter))
 
         return S
