@@ -3,7 +3,6 @@ import Queue
 from collections import deque
 import random
 import numpy as np
-import random as rng
 from collections import defaultdict
 
 class Hedge(object):
@@ -12,6 +11,38 @@ class Hedge(object):
         self.par = []
         self.x = []
         self.z = -1
+
+class Xorshift:
+    def helper(self, s, i):
+        return 1812433253 * (s ^ (s >> 30)) + i + 1
+
+    def __init__(self, seed):
+        self.x = self.helper(seed, 0)
+        self.y = self.helper(self.x, 1)
+        self.z = self.helper(self.y, 2)
+        self.w = self.helper(self.z, 3)
+
+    def __init__(self):
+        self.x = self.helper(0, 0)
+        self.y = self.helper(self.x, 1)
+        self.z = self.helper(self.y, 2)
+        self.w = self.helper(self.z, 3)
+
+    def gen_int(self):
+        t = self.x ^ (self.x << 11)
+        self.x = self.y
+        self.y = self.z
+        self.z = self.w
+        self.w = self.w ^ (self.w >> 19) ^ t ^ (t >> 8)
+        return self.w
+
+    def gen_int2(self, n):
+        return int(n * self.gen_double())
+
+    def gen_double(self):
+        a, b = abs(self.gen_int()) >> 5, abs(self.gen_int()) >> 6
+        return (a * 67108864.0 + b) * (1.0 / (1 << 53))
+
 
 class DynamicGraph(object):
     Vertices = set([])
@@ -26,14 +57,17 @@ class DynamicGraph(object):
     VertexList = []
     beta = 0.0
 
+    rng = Xorshift()
+
     def __init__(self):
         self.name = ""
 
     def _next_target(self, at):
         n = len(self.VertexList)
         while True:
-            rng.seed(n)
-            z = random.choice(self.VertexList)
+            x = self.rng.gen_int2(n)
+            print x
+            z = self.VertexList[x]
             if (z in self.Vertices):
                 return z
 
@@ -81,7 +115,7 @@ class DynamicGraph(object):
                 if (temp < prob):
                     self._clear(at)
                     self.hs[at].z = u
-                    self._expand(at, u);
+                    self._expand(at, u)
         self._adjust()
 
     def delEdge(self,u,v):
@@ -132,14 +166,14 @@ class DynamicGraph(object):
         for at in self.VtoIndices[v]:
             jt = bisect_left(self.hs[at].x, (v, u), lo=0, hi=len(self.hs[at].x))
             uv1 = jt != len(self.hs[at].x) and self.hs[at].x[jt] == (v,u)
-            uv2 = rng.uniform(0,1) < p;
+            uv2 = rng.uniform(0,1) < p
             # Case 1: dead -> live
             if not uv1 and uv2 :
                 self.hs[at].x.insert(jt, (v, u))
                 if u not in self.hs[at].H:
                     kt = bisect_left(self.hs[at].par, (v, u), lo=0, hi=len(self.hs[at].par))
                     self.hs[at].par.insert(kt, (v, u))
-                    self._expand(at, u);
+                    self._expand(at, u)
 
 
             # Case 2:live -> dead
@@ -159,7 +193,7 @@ class DynamicGraph(object):
             for it in range(bisect_left(self.ps, (v, 0), lo=0, hi=len(self.ps)), len(self.ps)) :
                 if it[0] != v:
                     break
-                out.append(it[1]);
+                out.append(it[1])
 
             # IN-edges `to' v
             for it in range(bisect_left(self.rs, (v, 0), lo=0, hi=len(self.rs)), len(self.rs)) :
@@ -170,14 +204,14 @@ class DynamicGraph(object):
             # Remove OUT-edges from each sketch
             for w in out :
                 for at in self.VtoIndices[w]:
-                    e = (w, v);
+                    e = (w, v)
                     jt = bisect_left(self.hs[at].x, e, lo = 0, hi=len(self.hs[at].x))
                     if (jt != len(self.hs[at].x) and jt == e) :
-                        self.hs[at].x.remove(jt);
-                    self._weight(at, -1); # Removal of (v, w)
+                        self.hs[at].x.remove(jt)
+                    self._weight(at, -1) # Removal of (v, w)
 
             # So that _next_target MUST not return v
-            self.Vertices.remove(v);
+            self.Vertices.remove(v)
             for w in out :
                 # Remove (v, w)
                 self.ps.remove((v, w))
@@ -205,7 +239,7 @@ class DynamicGraph(object):
 
     def _shrink(self,att):
         #clear -> TO DO
-	self._clear() 
+        self._clear(att) 
         queue = deque()
         queue.append(self.hs[att].z)
         X = set()
@@ -280,14 +314,14 @@ class DynamicGraph(object):
 
     def infMax(self, k):
         n = len(self.Vertices)
-        # vector<ULL> degs(n);
+        # vector<ULL> degs(n)
         I = [False]*len(self.hs)
 
         degs = [0]*n
 
         Q = Queue.PriorityQueue()
 
-        # priority_queue<tuple<LL, int, int> > Q;
+        # priority_queue<tuple<LL, int, int> > Q
         # <deg, v, tick>
 
         for v in self.Vertices :
@@ -301,10 +335,10 @@ class DynamicGraph(object):
             v = e[1] 
             tick = e[2]
             if tick == iter :
-                S.append(v);
+                S.append(v)
                 for at in self.VtoIndices[v] :
                     if not I[at] :
-                        I[at] = True;
+                        I[at] = True
                         for v in self.hs[at].H :
                             degs[v] -= 1
                 iter+=1
