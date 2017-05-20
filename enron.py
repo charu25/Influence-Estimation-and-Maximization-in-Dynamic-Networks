@@ -10,7 +10,7 @@ exclude = string.punctuation
 prob = [0.1,0.01,0.001]
 
 edge_set = defaultdict(int)
-with open("out.enron") as tsvfile:
+with open("enron/out.enron") as tsvfile:
     next(tsvfile)
     tsvreader = csv.reader(tsvfile, delimiter="\t")
     for row in tsvreader:
