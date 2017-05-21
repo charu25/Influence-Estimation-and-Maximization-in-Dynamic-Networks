@@ -33,4 +33,3 @@ for v in range(0,4):
     print "Influence of {} is {}".format(v, dmg.infEst(v))
 
 print "Most influential vertex is {}".format(dmg.infMax(4)[-1])
-

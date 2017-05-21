@@ -87,7 +87,6 @@ class DynamicGraph(object):
                     self.hs[at].z = u
                     self._expand(at, u)
             self._adjust()
-            print count
 
     def delEdge(self,u,v):
         if (u,v) not in self.ps:
@@ -285,11 +284,12 @@ class DynamicGraph(object):
 
 
     def infMax(self, k):
-        n = len(self.VertexList)
+        n = (max(self.VertexList))+1
         # vector<ULL> degs(n);
         I = [False]*len(self.hs)
 
         degs = [0]*n
+        print n
 
         Q = Queue.PriorityQueue()
 
