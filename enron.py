@@ -1,4 +1,5 @@
 import csv
+import time
 import string
 from DynamicGraph import DynamicGraph
 import random
@@ -8,24 +9,34 @@ dmg = DynamicGraph()
 a_set = set()
 exclude = string.punctuation
 prob = [0.1,0.01,0.001]
+dmg.set_beta(32)
+start_time = time.time()
+
+
 
 edge_set = defaultdict(int)
-with open("enron/out.enron") as tsvfile:
+with open("enron_data_weight.tsv") as tsvfile:
     next(tsvfile)
     tsvreader = csv.reader(tsvfile, delimiter="\t")
     for row in tsvreader:
         vertex = row[0].split()
         edge_set[(int(vertex[0]), int(vertex[1]))] += 1
 
+i=0
 for edge in edge_set:
-    if edge[0] not in a_set:
-        dmg.addVertex(edge[0])
-        a_set.add(edge[0])
-    if edge[1] not in a_set:
-        dmg.addVertex(edge[1])
-        a_set.add(edge[1])
+    i+=1
+    if i>1000:
+        break
+    if edge[0]!=edge[1]:
+        if edge[0] not in a_set:
+            dmg.addVertex(edge[0])
+            a_set.add(edge[0])
+        if edge[1] not in a_set:
+            dmg.addVertex(edge[1])
+            a_set.add(edge[1])
 
-    dmg.addEdge(edge[0],edge[1],0.1)#random.choice(prob))
+    dmg.addEdge(edge[0],edge[1],random.choice(prob))
+
 
 
 #with open("out.enron") as tsvfile:
@@ -51,4 +62,8 @@ for v in a_set:
     if dmg.infEst(v) > 0:
         print ("Influence of {} is {}".format(v, dmg.infEst(v)))
 
-print ("Most influential vertex is {}".format(dmg.infMax(4)[-1]))
+# print ("Most influential vertex is {}".format(dmg.infMax(4)[-1]))
+
+
+print("--- %s seconds ---" % (time.time() - start_time))
+
