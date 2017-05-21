@@ -49,11 +49,12 @@ int main(int argc, char *argv[]) {
 
 #if TR
     cout << "TR" << endl;
+    vector<double> probs = {0.1, 0.01, 0.001};
+
 #elif WC
     cout << "WC" << endl;
-#endif
 
-    vector<double> probs = {0.1, 0.01, 0.001};
+#endif
 
     int numEdges = 1000;
 
