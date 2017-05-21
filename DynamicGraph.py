@@ -13,6 +13,16 @@ class Hedge(object):
         self.x = []
         self.z = -1
 
+class Element(object):
+    def __init__(self, deg, v,iterations):
+      self.deg= deg
+      self.v = v
+      self.iterations = iterations
+
+    def __cmp__(self, other):
+        return -cmp(self.deg, other.deg)
+
+
 class DynamicGraph(object):
     Vertices = set([])
     VtoIndices = defaultdict(list)
@@ -87,7 +97,6 @@ class DynamicGraph(object):
                     self.hs[at].z = u
                     self._expand(at, u)
             self._adjust()
-            print count
 
     def delEdge(self,u,v):
         if (u,v) not in self.ps:
@@ -298,14 +307,14 @@ class DynamicGraph(object):
 
         for v in self.Vertices:
             degs[v] = len(self.VtoIndices[v])
-            Q.put((degs[v], v, 0))
+            Q.put(Element(degs[v], v, 0))
 
         S = []
         iter = 0
         while iter < k and iter < len(self.Vertices):
             e = Q.get()
-            v = e[1] 
-            tick = e[2]
+            v = e.v 
+            tick = e.iterations
             if tick == iter :
                 S.append(v)
                 for at in self.VtoIndices[v] :
@@ -315,6 +324,6 @@ class DynamicGraph(object):
                             degs[v] -= 1
                 iter+=1
             else :
-                Q.put((degs[v], v, iter))
+                Q.put(Element(degs[v], v, iter))
 
         return S

@@ -3,7 +3,6 @@
 #include <iostream>
 #include <unordered_map>
 #include <map>
-#include <unordered_set>
 #include <vector>
 #include <cstdlib>
 #include <locale>
@@ -19,6 +18,7 @@ int GetRandomIndex(int n)
 void GetPair (const string& line, pair<int, int>& edge)
 {
     int i = 0;
+
     string source = "", dest = "";
     for (; i < line.length() && isdigit(line[i]); i++)
     {
@@ -35,18 +35,43 @@ void GetPair (const string& line, pair<int, int>& edge)
 
 int main(int argc, char *argv[]) {
     DIM dim;
+    int start_s=clock();
 
-    ifstream fi("enron/out.enron");
+
+    //ifstream fi("enron/out.enron");
+    ifstream fi("enron/enron_data_weight.tsv");
     srand ( time(NULL) ); //initialize the random seed
 
     string line = "";
 
-    map<pair<int, int>, int> edgeSet;
-    unordered_set<int> vertexSet;
+    map<pair<int, int>, int> edgeMap;
+    unordered_map<int, int> vertexDegMap;
+
+#if TR
+    cout << "TR" << endl;
     vector<double> probs = {0.1, 0.01, 0.001};
 
-    int i = 10000;
-    while (getline(fi, line) && i--)
+#elif WC
+    cout << "WC" << endl;
+
+#endif
+
+    int numEdges = 1000;
+
+    /*
+    cout << "Argc = " << argc << endl;
+    for (int i = 0; i < argc; i++)
+    {
+        cout << argv[i] << endl;
+    }
+    */
+    if (argc > 1)
+    {
+        numEdges = stoi(argv[1]);
+    }
+    cout << numEdges << endl;
+
+    while (getline(fi, line) && numEdges--)
     {
         if (line.find("%") == string::npos)
         {
@@ -56,32 +81,41 @@ int main(int argc, char *argv[]) {
             if (edge.first == edge.second)
                 continue;
 
-            vertexSet.insert(edge.first);
-            vertexSet.insert(edge.second);
-            edgeSet[edge]++;
+            vertexDegMap[edge.first]++;
+            vertexDegMap[edge.second]++;
+            edgeMap[edge]++;
         }
     }
 
     fi.close();
 
     dim.init();
-    dim.set_beta(128); // Set beta=32
+    dim.naive_operation = true;
+    dim.set_beta(32); // Set beta=32
 
-    for (unordered_set<int>::iterator it = vertexSet.begin(); it != vertexSet.end(); it++)
+    for (unordered_map<int, int>::iterator it = vertexDegMap.begin(); it != vertexDegMap.end(); it++)
     {
-        dim.insert(*it);
+        dim.insert(it->first);
     }
 
-    for (map<pair<int, int>, int>::iterator it = edgeSet.begin(); it != edgeSet.end(); it++)
+    for (map<pair<int, int>, int>::iterator it = edgeMap.begin(); it != edgeMap.end(); it++)
     {
+#if TR
         dim.insert(it->first.first, it->first.second, probs[GetRandomIndex(probs.size())]);
+#elif WC
+        dim.insert(it->first.first, it->first.second, (1.0/vertexDegMap[it->second]));
+#endif
     }
+    cout << "Number of subgraphs generated: " << dim.hs.size() << endl;
 
-    for (unordered_set<int>::iterator it = vertexSet.begin(); it != vertexSet.end(); it++)
-        printf("Influence of %d is %1.6f\n", *it, dim.infest(*it));
-    printf("Most influential vertex is %d\n", dim.infmax(1)[0]);
+    cout << "[";
+    for (unordered_map<int, int>::iterator it = vertexDegMap.begin(); it != vertexDegMap.end(); it++)
+        cout << dim.infest(it->first) << ", ";
+    cout << "\b\b]" << endl;
+    //printf("Most influential vertex is %d\n", dim.infmax(1)[0]);
 
-
+    int stop_s=clock();
+    cout << (stop_s - start_s)/double(CLOCKS_PER_SEC) << endl << endl;
 
     return 0;
 }
