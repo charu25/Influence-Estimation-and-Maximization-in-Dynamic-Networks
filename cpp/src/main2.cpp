@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-    int numEdges = 1000;
+    long long numEdges = 1000;
 
     /*
     cout << "Argc = " << argc << endl;
@@ -67,9 +67,16 @@ int main(int argc, char *argv[]) {
     */
     if (argc > 1)
     {
-        numEdges = stoi(argv[1]);
+        if (stoi(argv[1]) == -1)
+        {
+            numEdges = LLONG_MAX;
+        }
+        else
+        {
+            numEdges = stoi(argv[1]);
+        }
     }
-    cout << numEdges << endl;
+    cout << ((numEdges == LLONG_MAX)? -1: numEdges) << endl;
 
     while (getline(fi, line) && numEdges--)
     {
@@ -115,7 +122,7 @@ int main(int argc, char *argv[]) {
     //printf("Most influential vertex is %d\n", dim.infmax(1)[0]);
 
     int stop_s=clock();
-    cout << (stop_s - start_s)/double(CLOCKS_PER_SEC) << endl << endl;
+    cout << (stop_s - start_s)/double(CLOCKS_PER_SEC) << endl;
 
     return 0;
 }

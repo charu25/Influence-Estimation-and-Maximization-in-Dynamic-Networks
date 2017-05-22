@@ -33,3 +33,5 @@ testing:
 
 clean:
 	rm -f do infTR infWC
+
+
