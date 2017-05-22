@@ -1,4 +1,5 @@
 import csv
+import time
 import string
 from DynamicGraph import DynamicGraph
 import random
@@ -16,6 +17,10 @@ dmg = DynamicGraph()
 a_set = set()
 exclude = string.punctuation
 prob = [0.1,0.01,0.001]
+dmg.set_beta(32)
+start_time = time.time()
+
+
 
 dmg.set_beta(32)
 edge_set = defaultdict(int)
@@ -41,6 +46,7 @@ with open("enron_data_weight.tsv") as tsvfile:
 i = 0
 time0 = time.time()
 
+i=0
 for edge in edge_set:
     if edge[0] != edge[1] and i < num_of_edges:
         # print edge
@@ -60,6 +66,7 @@ print num_of_edges
  # "Time taken for {} nodes is {} for {} model".format(num_of_edges,time.time() - time0, model)
 time_taken = time.time() - time0
 influences = []
+
 for v in a_set:
     val = dmg.infEst(v)
     if val > 0: 
@@ -68,4 +75,7 @@ for v in a_set:
 print influences
 print time_taken
 
-# print dmg.infMax(len(a_set))[-5:]
+print ("Most influential vertex is {}".format(dmg.infMax(1)[0]))
+
+
+print("--- %s seconds ---" % (time.time() - start_time))
