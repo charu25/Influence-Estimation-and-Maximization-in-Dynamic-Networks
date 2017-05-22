@@ -67,6 +67,7 @@ class DynamicGraph(object):
 
         self.changeEdge(u, v, p)
         self._adjust()
+        # print "Subgraphs :: ", len(self.hs)
 
     def addVertex(self, u):
     	if u in self.Vertices:
