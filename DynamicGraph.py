@@ -1,9 +1,7 @@
 from bisect import bisect_left
 import Queue
 from collections import deque
-import random
 import numpy as np
-import random as rng
 from collections import defaultdict
 
 class Hedge(object):
@@ -24,6 +22,35 @@ class Element(object):
 
 
 class DynamicGraph(object):
+
+    class XorShift(object):
+
+        def underscore(self, s, i):
+            return 1812433253 * (s ^ (s >> 30)) + i + 1
+
+        def __init__(self, seed=0):
+            self.x = self.underscore(seed,0) % (2**32)
+            self.y = self.underscore(self.x,0) % (2**32)
+            self.z = self.underscore(self.y,0) % (2**32)
+            self.w = self.underscore(self.z,0) % (2**32)
+
+        def gen_int(self):
+            t = (self.x ^ (self.x << 11)) % (2**32)
+            self.x = self.y
+            self.y = self.z
+            self.z = self.w
+            self.w = (self.w ^ (self.w >> 19) ^ t ^ (t >> 8)) % (2**32)
+            return self.w
+
+        def gen_double(self):
+            a = self.gen_int() >> 5
+            b = self.gen_int() >> 6
+
+            return ((a * 67108864.0) + b) * (1.0 / (1 << 53))
+
+        def gen_intn(self, n):
+            return int(n * self.gen_double())
+
     Vertices = set([])
     VtoIndices = defaultdict(list)
     W = 0
@@ -35,6 +62,8 @@ class DynamicGraph(object):
     ws = []
     VertexList = []
     beta = 0.0
+    naive_operation = True
+    rng = XorShift()
 
     def __init__(self):
         self.name = ""
@@ -43,7 +72,10 @@ class DynamicGraph(object):
     def _next_target(self, at):
         n = len(self.VertexList)
         while True:
-            z = random.choice(self.VertexList)
+
+            num = self.rng.gen_intn(n)
+            z = self.VertexList[num]
+
             if (z in self.Vertices):
                 return z
 
@@ -87,17 +119,39 @@ class DynamicGraph(object):
             self.Vertices.add(u)
             self.VertexList.append(u)
 
-            count = 0
             prob = 1.0/len(self.Vertices)
-            # print "Sizeof hs:",len(self.hs)
-            for at in range(0, len(self.hs)):
-                temp = random.random()
-                count+=1
-                if (temp < prob):
+            if self.naive_operation:
+                # print "Sizeof hs:",len(self.hs)
+                for at in range(0, len(self.hs)):
+                    temp = self.rng.gen_double()
+                    if (temp < prob):
+                        self._clear(at)
+                        self.hs[at].z = u
+                        self._expand(at, u)
+                self._adjust()
+            else:
+
+                # Skipping method for vertex addition
+                at = 0
+
+                while (True):
+                    k = 0
+                    if len(self.Vertices) != 1:
+                        x = self.rng.gen_double()
+                        k = np.log(1.0-x) / np.log(1.0-prob)
+
+                    at += int(k)
+
+                    if k >=len(self.hs) or at >= len(self.hs):
+                        break
+
                     self._clear(at)
                     self.hs[at].z = u
                     self._expand(at, u)
-            self._adjust()
+
+                    at += 1
+
+                self._adjust()
 
     def delEdge(self,u,v):
         if (u,v) not in self.ps:
@@ -147,7 +201,7 @@ class DynamicGraph(object):
         for at in self.VtoIndices[v]:
             jt = bisect_left(self.hs[at].x, (v, u), lo=0, hi=len(self.hs[at].x))
             uv1 = jt != len(self.hs[at].x) and self.hs[at].x[jt] == (v,u)
-            uv2 = rng.uniform(0,1) < p;
+            uv2 = self.rng.gen_double() < p;
             # Case 1: dead -> live
             if not uv1 and uv2 :
                 self.hs[at].x.insert(jt, (v, u))
@@ -258,7 +312,7 @@ class DynamicGraph(object):
                     if key[0]==v:
                         u=key[1]
                         p=value
-                        x = rng.uniform(0,1)
+                        x = self.rng.gen_double()
                         if p > x: #Edge is live
                             self.hs[at].x.append((v,u))
                             if u not in self.hs[at].H:
