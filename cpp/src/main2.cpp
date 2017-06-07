@@ -35,11 +35,13 @@ void GetPair (const string& line, pair<int, int>& edge)
 
 int main(int argc, char *argv[]) {
     DIM dim;
-    int start_s=clock();
-
 
     //ifstream fi("enron/out.enron");
+#if ENRON
     ifstream fi("enron/enron_data_weight.tsv");
+#elif DIGG
+    ifstream fi("digg/out.munmun_digg_reply_unique");
+#endif
     srand ( time(NULL) ); //initialize the random seed
 
     string line = "";
@@ -56,7 +58,7 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-    long long numEdges = 1000;
+    long long numVertices = 1000;
 
     /*
     cout << "Argc = " << argc << endl;
@@ -69,16 +71,16 @@ int main(int argc, char *argv[]) {
     {
         if (stoi(argv[1]) == -1)
         {
-            numEdges = LLONG_MAX;
+            numVertices = LLONG_MAX;
         }
         else
         {
-            numEdges = stoi(argv[1]);
+            numVertices = stoi(argv[1]);
         }
     }
-    cout << ((numEdges == LLONG_MAX)? -1: numEdges) << endl;
+    cout << ((numVertices == LLONG_MAX)? -1: numVertices) << endl;
 
-    while (getline(fi, line) && numEdges--)
+    while (getline(fi, line) && numVertices > vertexDegMap.size())
     {
         if (line.find("%") == string::npos)
         {
@@ -94,10 +96,46 @@ int main(int argc, char *argv[]) {
         }
     }
 
+	bool foundEdge = false, foundVertex = false;
+
+	pair<int, int> nextEdge(0,0);
+	int nextVertex = -1;
+	while (getline(fi, line) && (foundVertex == false || foundEdge == false))
+    {
+        if (line.find("%") == string::npos)
+        {
+            pair<int, int> edge(0,0);
+            GetPair(line, edge);
+
+            if (edge.first == edge.second)
+                continue;
+
+			if (foundEdge == false && edgeMap.find(edge) == edgeMap.end())
+			{
+				foundEdge = true;
+				nextEdge.first = edge.first;
+				nextEdge.second = edge.second;
+				vertexDegMap[edge.first]++;
+				vertexDegMap[edge.second]++;
+			}
+
+			if (foundVertex == false && vertexDegMap.find(edge.first) == vertexDegMap.end())
+			{
+				foundVertex = true;
+				nextVertex = edge.first;
+			}
+			else if (foundVertex == false && vertexDegMap.find(edge.second) == vertexDegMap.end())
+			{
+				foundVertex = true;
+				nextVertex = edge.second;
+			}
+        }
+    }
+
     fi.close();
 
     dim.init();
-    dim.naive_operation = true;
+    dim.naive_operation = false;
     dim.set_beta(32); // Set beta=32
 
     for (unordered_map<int, int>::iterator it = vertexDegMap.begin(); it != vertexDegMap.end(); it++)
@@ -113,6 +151,7 @@ int main(int argc, char *argv[]) {
         dim.insert(it->first.first, it->first.second, (1.0/vertexDegMap[it->second]));
 #endif
     }
+	/*
     cout << "Number of subgraphs generated: " << dim.hs.size() << endl;
 
     cout << "[";
@@ -120,6 +159,30 @@ int main(int argc, char *argv[]) {
         cout << dim.infest(it->first) << ", ";
     cout << "\b\b]" << endl;
     //printf("Most influential vertex is %d\n", dim.infmax(1)[0]);
+	*/
+
+    dim.naive_operation = false;
+    int start_s=clock();
+
+	//edge deletion
+	//dim.erase(edgeMap.begin()->first.first, edgeMap.begin()->first.second);
+
+	/*
+	//edge addition
+#if TR
+	dim.insert(nextEdge.first, nextEdge.second, probs[GetRandomIndex(probs.size())]);
+#elif WC
+	dim.insert(nextEdge.first, nextEdge.second, (1.0/vertexDegMap[nextEdge.second]));
+#endif
+	*/
+	//vertex addition
+	//dim.insert(nextVertex);
+
+	//vertex deletion
+	//dim.erase(edgeMap.begin()->first.first);
+
+    //change edge pririority
+	dim.change(edgeMap.begin()->first.first, edgeMap.begin()->first.second, 0.3);
 
     int stop_s=clock();
     cout << (stop_s - start_s)/double(CLOCKS_PER_SEC) << endl;
